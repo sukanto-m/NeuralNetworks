@@ -71,17 +71,22 @@ class NeuralNet:
         return dW, db
 
     def sigmoid(self, z):
-        return 1 / (1 + np.exp(-z))
+        return 1. / (1. + np.exp(-z))
 
     def sigmoid_derivative(self, a):
         return a * (1 - a)
 
-    def update_params(self, dW, db):
+    def update_params(self, dW, db, clip_value=5):
         for i in range(len(self.weights)):
+            dW[i] = np.clip(dW[i], -clip_value, clip_value)
+            db[i] = np.clip(db[i], -clip_value, clip_value)
             self.weights[i] -= self.eta * (dW[i] + self.lambd * self.weights[i])
             self.biases[i] -= self.eta * db[i]
 
-    def train(self, batch_size=32):
+    def train(self, batch_size=32, patience=10):
+        best_loss = float('inf')
+        patience_counter = 0
+        
         for epoch in range(self.n_iter):
             X_shuffled, y_shuffled = self.shuffle_data(self.input_data, self.true_labels)
             for i in range(0, X_shuffled.shape[0], batch_size):
@@ -97,6 +102,16 @@ class NeuralNet:
                     print(f"Epoch {epoch+1}/{self.n_iter}, Batch {i//batch_size+1}/{X_shuffled.shape[0]//batch_size}, Loss: {loss}")
 
             self.train_losses.append(loss)
+
+            # Early stopping
+            if loss < best_loss:
+                best_loss = loss
+                patience_counter = 0
+            else:
+                patience_counter += 1
+                if patience_counter >= patience:
+                    print(f"Early stopping at epoch {epoch+1}")
+                    return
 
     def shuffle_data(self, X, y):
         indices = np.arange(X.shape[0])
