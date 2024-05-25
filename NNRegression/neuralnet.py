@@ -25,6 +25,7 @@ class NeuralNet:
         self.weights, self.biases = self.initialise_weights()
         self.train_losses = []
 
+
     def initialise_weights(self):
         weights = []
         biases = []
